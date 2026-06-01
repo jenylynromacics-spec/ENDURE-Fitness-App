@@ -17,4 +17,5 @@ if (isset($_POST["user_id"], $_POST["distance_km"], $_POST["time_minutes"])) {
     );
 
     echo $result ? "success" : "error";
+    exit; // ✅ IMPORTANT
 }

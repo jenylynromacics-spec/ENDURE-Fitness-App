@@ -15,6 +15,7 @@ if (isset($_POST["first_name"])) {
         $_POST["middle_name"],
         $_POST["last_name"],
         $_POST["birthday"],
+        $_POST["contact_number"],
         $_POST["email"],
         $_POST["password"]
     );

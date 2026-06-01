@@ -20,19 +20,20 @@ class UserModel
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
-    public function createUser($firstName, $middleName, $lastName, $birthday, $email, $password, $created_at)
+    public function createUser($fName, $mName, $lName, $birthday, $contact, $email, $password, $created_at)
     {
         $query = "INSERT INTO tbl_users 
-                (first_name, middle_name, last_name, birthday, email, password, role_id, created_at)
-              VALUES 
-                (:first_name, :middle_name, :last_name, :birthday, :email, :password, 2, :created_at)";
+        (first_name, middle_name, last_name, birthday, contact_number, email, role_id, password, created_at)
+        VALUES 
+        (:fName, :mName, :lName, :birthday, :contact, :email, 2, :password, :created_at)";
 
         $stmt = $this->conn->prepare($query);
 
-        $stmt->bindParam(":first_name", $firstName);
-        $stmt->bindParam(":middle_name", $middleName);
-        $stmt->bindParam(":last_name", $lastName);
+        $stmt->bindParam(":fName", $fName);
+        $stmt->bindParam(":mName", $mName);
+        $stmt->bindParam(":lName", $lName);
         $stmt->bindParam(":birthday", $birthday);
+        $stmt->bindParam(":contact", $contact);
         $stmt->bindParam(":email", $email);
         $stmt->bindParam(":password", $password);
         $stmt->bindParam(":created_at", $created_at);
@@ -80,10 +81,6 @@ class UserModel
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    // ========================
-    // DASHBOARD CARD FUNCTIONS
-    // ========================
-
     public function cardTotalRuns($userID)
     {
         $query = "SELECT COUNT(*) AS total_runs 
@@ -110,6 +107,98 @@ class UserModel
         return $stmt;
     }
 
+    public function cardActiveGoals($userID)
+    {
+        $query = "SELECT COUNT(*) as total 
+              FROM tbl_goals 
+              WHERE user_id = :user_id 
+              AND status = 'Active'";
+
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(":user_id", $userID);
+        $stmt->execute();
+
+        return $stmt;
+    }
+
+    public function fetchGoalsByUser($user_id)
+    {
+        $query = "SELECT g.*, t.goal_name 
+              FROM tbl_goals g
+              JOIN tbl_goal_types t ON g.goal_type_id = t.goal_type_id
+              WHERE g.user_id = :user_id
+              ORDER BY g.created_at DESC";
+
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(":user_id", $user_id);
+        $stmt->execute();
+
+        return $stmt;
+    }
+
+    public function fetchGoalTypes()
+    {
+        $query = "SELECT * FROM tbl_goal_types";
+        $stmt = $this->conn->prepare($query);
+        $stmt->execute();
+        return $stmt;
+    }
+
+    public function insertGoal($userID, $type, $target, $date)
+    {
+        $query = "INSERT INTO tbl_goals (user_id, goal_type_id, target_value, target_date)
+              VALUES (:user_id, :type, :target, :date)";
+
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(":user_id", $userID);
+        $stmt->bindParam(":type", $type);
+        $stmt->bindParam(":target", $target);
+        $stmt->bindParam(":date", $date);
+
+        return $stmt->execute();
+    }
+
+    public function insertWeight($userID, $weight, $date)
+    {
+        $query = "INSERT INTO tbl_body_metrics 
+        (user_id, weight_kg, record_date) 
+        VALUES (:user_id, :weight, :date)";
+
+        $stmt = $this->conn->prepare($query);
+
+        $stmt->bindParam(":user_id", $userID);
+        $stmt->bindParam(":weight", $weight);
+        $stmt->bindParam(":date", $date);
+
+        return $stmt->execute();
+    }
+    public function getBodyOverview($userID)
+    {
+        $query = "
+    SELECT 
+        (SELECT weight_kg FROM tbl_body_metrics 
+         WHERE user_id = :user_id 
+         ORDER BY record_date DESC LIMIT 1) AS current_weight,
+
+        (SELECT weight_kg FROM tbl_body_metrics 
+         WHERE user_id = :user_id 
+         ORDER BY record_date ASC LIMIT 1) AS start_weight
+    ";
+
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(":user_id", $userID);
+        $stmt->execute();
+
+        $data = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($data && $data['current_weight'] && $data['start_weight']) {
+            $data['weight_change'] = $data['current_weight'] - $data['start_weight'];
+        } else {
+            $data['weight_change'] = 0;
+        }
+
+        return $data;
+    }
     public function cardCurrentWeight($userID)
     {
         $query = "SELECT weight_kg 
@@ -124,13 +213,15 @@ class UserModel
 
         return $stmt;
     }
-
-    public function cardActiveGoals($userID)
+    public function getWeightHistory($userID)
     {
-        $query = "SELECT COUNT(*) AS total_goals 
-                  FROM tbl_goals 
-                  WHERE user_id = :user_id 
-                  AND status = 'active'";
+        $query = "
+        SELECT weight_kg, record_date
+        FROM tbl_body_metrics
+        WHERE user_id = :user_id
+        ORDER BY record_date DESC
+        LIMIT 5
+    ";
 
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(":user_id", $userID);
@@ -139,48 +230,32 @@ class UserModel
         return $stmt;
     }
 
-    public function insertRun($userID, $distance, $time, $pace, $date)
+    public function getLatestWeight($userID)
     {
-        $query = "INSERT INTO tbl_runs 
-              (user_id, distance_km, time_minutes, pace_per_km, run_date)
-              VALUES (:user_id, :distance, :time, :pace, :date)";
+        $query = "SELECT weight_kg FROM tbl_body_metrics 
+              WHERE user_id = :user_id 
+              ORDER BY created_at DESC LIMIT 1";
 
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(":user_id", $userID);
-        $stmt->bindParam(":distance", $distance);
-        $stmt->bindParam(":time", $time);
-        $stmt->bindParam(":pace", $pace);
-        $stmt->bindParam(":date", $date);
+        $stmt->execute();
 
-        return $stmt->execute();
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $row ? $row['weight_kg'] : 0;
     }
 
-    public function insertGoal($userID, $type, $target, $date)
+    public function getStartingWeight($userID)
     {
-        $query = "INSERT INTO tbl_goals 
-              (user_id, goal_type_id, target_value, target_date, status)
-              VALUES (:user_id, :type, :target, :date, 'active')";
+        $query = "SELECT weight_kg FROM tbl_body_metrics 
+              WHERE user_id = :user_id 
+              ORDER BY created_at ASC LIMIT 1";
 
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(":user_id", $userID);
-        $stmt->bindParam(":type", $type);
-        $stmt->bindParam(":target", $target);
-        $stmt->bindParam(":date", $date);
+        $stmt->execute();
 
-        return $stmt->execute();
-    }
-
-    public function insertWeight($userID, $weight)
-    {
-        $query = "INSERT INTO tbl_body_metrics 
-              (user_id, weight_kg, created_at)
-              VALUES (:user_id, :weight, NOW())";
-
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(":user_id", $userID);
-        $stmt->bindParam(":weight", $weight);
-
-        return $stmt->execute();
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $row ? $row['weight_kg'] : 0;
     }
 
     public function insertWorkout($userID, $type, $duration, $date)
@@ -198,41 +273,102 @@ class UserModel
         return $stmt->execute();
     }
 
-    public function getRecentActivities($userID)
+    public function getWorkoutOverview($userID)
     {
         $query = "
-        SELECT 'Run' AS activity,
-               CONCAT(distance_km, ' km | ', time_minutes, ' mins') AS info,
-               run_date AS date
-        FROM tbl_runs
-        WHERE user_id = :user_id
-
-        UNION
-
-        SELECT 'Workout' AS activity,
-               CONCAT(wt.workout_name, ' | ', w.duration_minutes, ' mins') AS info,
-               w.workout_date AS date
-        FROM tbl_workouts w
-        JOIN tbl_workout_types wt ON w.workout_type_id = wt.workout_type_id
-        WHERE w.user_id = :user_id
-
-        UNION
-
-        SELECT 'Weight' AS activity,
-               CONCAT(weight_kg, ' kg') AS info,
-               created_at AS date
-        FROM tbl_body_metrics
-        WHERE user_id = :user_id
-
-        ORDER BY date DESC
-        LIMIT 5
+    SELECT 
+        COUNT(*) AS total_workouts,
+        SUM(duration_minutes) AS total_duration,
+        (
+            SELECT wt.workout_name
+            FROM tbl_workouts w
+            JOIN tbl_workout_types wt 
+                ON w.workout_type_id = wt.workout_type_id
+            WHERE w.user_id = :user_id
+            GROUP BY w.workout_type_id
+            ORDER BY COUNT(*) DESC
+            LIMIT 1
+        ) AS most_frequent
+    FROM tbl_workouts
+    WHERE user_id = :user_id
     ";
 
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(":user_id", $userID);
         $stmt->execute();
 
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
+    public function getRecentWorkouts($userID)
+    {
+        $query = "
+    SELECT 
+        wt.workout_name,
+        w.duration_minutes,
+        w.workout_date
+    FROM tbl_workouts w
+    JOIN tbl_workout_types wt 
+        ON w.workout_type_id = wt.workout_type_id
+    WHERE w.user_id = :user_id
+    ORDER BY w.workout_date DESC
+    LIMIT 5
+    ";
+
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(":user_id", $userID);
+        $stmt->execute();
+
+        return $stmt;
+    }
+    public function getRecentActivities($userID)
+    {
+        $query = "
+    (
+    SELECT 'Run' AS activity, 
+           CONCAT(distance_km, ' km') AS info, 
+           run_date AS date
+    FROM tbl_runs
+    WHERE user_id = :user_id
+    ORDER BY run_date DESC
+    LIMIT 2
+)
+
+UNION ALL
+
+(
+    SELECT 'Workout' AS activity, 
+           CONCAT(wt.workout_name, ' | ', w.duration_minutes, ' mins') AS info, 
+           w.workout_date AS date
+    FROM tbl_workouts w
+    JOIN tbl_workout_types wt ON w.workout_type_id = wt.workout_type_id
+    WHERE w.user_id = :user_id
+    ORDER BY w.workout_date DESC
+    LIMIT 2
+)
+
+UNION ALL
+
+(
+    SELECT 'Goal' AS activity,
+           CONCAT(gt.goal_name, ' | Target: ', g.target_value) AS info,
+           g.target_date AS date
+    FROM tbl_goals g
+    JOIN tbl_goal_types gt ON g.goal_type_id = gt.goal_type_id
+    WHERE g.user_id = :user_id
+    ORDER BY g.target_date DESC
+    LIMIT 2
+)
+
+ORDER BY date DESC
+LIMIT 5
+    ";
+
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(":user_id", $userID);
+        $stmt->execute();
+
+        return $stmt;
     }
 
     public function getWorkoutTypes()
@@ -242,9 +378,8 @@ class UserModel
         $stmt = $this->conn->prepare($query);
         $stmt->execute();
 
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC); // 🔥 THIS LINE FIXES EVERYTHING
     }
-
     public function getGoalTypes()
     {
         $query = "SELECT goal_type_id, goal_name FROM tbl_goal_types";
@@ -267,6 +402,63 @@ class UserModel
         $stmt->execute();
 
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    //cc: Run Page Cards
+    public function getRunOverview($userID)
+    {
+        $query = "
+        SELECT 
+            SUM(distance_km) AS total_distance,
+            AVG(pace_per_km) AS avg_pace,
+            MIN(pace_per_km) AS best_pace
+        FROM tbl_runs
+        WHERE user_id = :user_id
+    ";
+
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(":user_id", $userID);
+        $stmt->execute();
+
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
+    public function getRecentRuns($userID)
+    {
+        $query = "
+        SELECT 
+            distance_km,
+            time_minutes,
+            pace_per_km,
+            run_date
+        FROM tbl_runs
+        WHERE user_id = :user_id
+        ORDER BY run_date DESC
+        LIMIT 5
+    ";
+
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(":user_id", $userID);
+        $stmt->execute();
+
+        return $stmt;
+    }
+
+    public function insertRun($userID, $distance, $time, $pace, $date)
+    {
+        $query = "INSERT INTO tbl_runs 
+              (user_id, distance_km, time_minutes, pace_per_km, run_date)
+              VALUES (:user_id, :distance, :time, :pace, :date)";
+
+        $stmt = $this->conn->prepare($query);
+
+        $stmt->bindParam(":user_id", $userID);
+        $stmt->bindParam(":distance", $distance);
+        $stmt->bindParam(":time", $time);
+        $stmt->bindParam(":pace", $pace);
+        $stmt->bindParam(":date", $date);
+
+        return $stmt->execute();
     }
 
     public function getWorkoutChart($userID)

@@ -1,16 +1,15 @@
 <?php
 session_start();
-require_once "../BL/WorkoutManagement.php";
 
-$workout = new WorkoutManagement();
+require_once "../bl/WorkoutManagement.php";
 
-if (isset($_POST["user_id"], $_POST["workout_type_id"], $_POST["duration_minutes"])) {
+$manager = new WorkoutManagement();
 
-    $result = $workout->logWorkout(
-        $_POST["user_id"],
-        $_POST["workout_type_id"],
-        $_POST["duration_minutes"]
-    );
+$userID = $_POST['user_id'] ?? 0;
+$type = $_POST['workout_type_id'] ?? 0;
+$duration = $_POST['duration_minutes'] ?? 0;
+$date = $_POST['workout_date'] ?? "";
 
-    echo $result ? "success" : "error";
-}
+$result = $manager->logWorkout($userID, $type, $duration, $date);
+
+echo $result ? "success" : "error";

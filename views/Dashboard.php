@@ -8,12 +8,14 @@ $userID = $user["user_id"];
 
 $userManager = new UserManagement();
 
+
 $totalRuns = $userManager->getCardTotalRuns($userID);
 $avgPace = $userManager->getCardAveragePace($userID);
 $currentWeight = $userManager->getCardCurrentWeight($userID);
 $currentWeightData = $currentWeight ?? null;
 $activeGoals = $userManager->getCardActiveGoals($userID);
 $activities = $userManager->getRecentActivities($userID);
+
 
 $runProgress = $userManager->getRunProgress($userID);
 $labels = array_column($runProgress, 'run_date');
@@ -59,39 +61,44 @@ $weightData = array_column($weightProgress, 'weight_kg');
         }
 
         /* SIDEBAR */
+
         .sidebar {
-            height: 100vh;
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 220px;
-            background: #161c17;
-            padding-top: 20px;
+            height: 100vh;
+            width: 230px;
+            background: linear-gradient(180deg, #111c15, #0f1a13);
+            padding: 25px;
+            border-right: 1px solid #1f2d24;
         }
 
-        /* SIDEBAR BUTTONS */
+        .sidebar h5 {
+            color: white;
+            margin-bottom: 30px;
+        }
+
         .sidebar button {
-            display: flex;
-            align-items: center;
-            gap: 12px;
             width: 100%;
             text-align: left;
             background: none;
             border: none;
             padding: 12px 15px;
-            border-radius: 10px;
+            border-radius: 12px;
             margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
             color: #cbd5e1;
-            font-weight: 500;
+            transition: 0.2s;
         }
 
         .sidebar button:hover {
-            background: rgba(74, 107, 63, 0.2);
+            background: rgba(74, 107, 63, 0.25);
         }
 
         .sidebar button.active {
-            background: #4a6b3f;
+            background: linear-gradient(to right, #4a6b3f, #6ea66a);
             color: white;
+            font-weight: 600;
         }
 
         /* MAIN */
@@ -389,12 +396,12 @@ $weightData = array_column($weightProgress, 'weight_kg');
                                     <div class="card-custom">
                                         <div class="card-title">Active Goals</div>
                                         <div class="card-value">
-                                            <?= isset($activeGoals['total_goals']) ? $activeGoals['total_goals'] : 0 ?>
+                                            <?= isset($activeGoals['total']) ? $activeGoals['total'] : 0 ?>
                                         </div>
 
                                         <div class="progress mt-2">
                                             <div class="progress-bar"
-                                                style="width: <?= isset($activeGoals['total_goals']) ? min($activeGoals['total_goals'] * 20, 100) : 0 ?>%">
+                                                style="width: <?= isset($activeGoals['total']) ? min($activeGoals['total'] * 20, 100) : 0 ?>%">
                                             </div>
                                         </div>
                                     </div>
@@ -423,12 +430,13 @@ $weightData = array_column($weightProgress, 'weight_kg');
                                     <?php if (!empty($activities)): ?>
                                         <?php $count = 1; ?>
 
-                                        <?php foreach ($activities as $act): ?>
+
+                                        <?php foreach ($activities as $index => $row): ?>
                                             <div class="activity-row">
-                                                <span><?= $count++ ?></span>
-                                                <span><?= htmlspecialchars($act['activity']) ?></span>
-                                                <span><?= htmlspecialchars($act['info']) ?></span>
-                                                <span><?= date("M d", strtotime($act['date'])) ?></span>
+                                                <span><?= $index + 1 ?></span>
+                                                <span><?= htmlspecialchars($row["activity"]) ?></span>
+                                                <span><?= htmlspecialchars($row["info"]) ?></span>
+                                                <span><?= date("M d", strtotime($row["date"])) ?></span>
                                             </div>
                                         <?php endforeach; ?>
 

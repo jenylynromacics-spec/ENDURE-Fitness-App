@@ -9,135 +9,427 @@
 });
 
 function registerUser() {
-  let firstName = document.getElementById("first_name").value.trim();
-  let middleName = document.getElementById("middle_name").value.trim();
-  let lastName = document.getElementById("last_name").value.trim();
-  let birthday = document.getElementById("birthday").value;
-  let email = document.getElementById("email").value.trim();
-  let password = document.getElementById("password").value.trim();
+  console.log("registerUser function started");
 
-  // required fields
-  if (!firstName || !lastName || !email || !password) {
-    alert("Please fill all required fields");
-    return;
-  }
+  // =========================
+  // GET VALUES
+  // =========================
+  var firstName = document.getElementById("first_name").value.trim();
+  var middleName = document.getElementById("middle_name").value.trim();
+  var lastName = document.getElementById("last_name").value.trim();
+  var birthday = document.getElementById("birthday").value;
+  var email = document.getElementById("email").value.trim();
+  var contactNumber = document.getElementById("contact_number").value.trim();
+  var password = document.getElementById("password").value;
+  var confirmPassword = document.getElementById("confirm_password").value;
 
-  // min length
-  if (firstName.length < 2 || lastName.length < 2) {
-    alert("Name must be at least 2 characters");
-    return;
-  }
+  // =========================
+  // VALIDATIONS
+  // =========================
+  var isFirstNameValid = firstName !== "";
+  var isLastNameValid = lastName !== "";
+  var isBirthdayValid = birthday !== "";
 
-  // email val
-  let emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailPattern.test(email)) {
-    alert("Invalid email format");
-    return;
-  }
+  var emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  var isEmailValid = emailPattern.test(email);
 
-  // Pass val
-  let strongPassword = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
+  var contactPattern = /^[0-9]{11}$/;
+  var isContactValid = contactPattern.test(contactNumber);
 
-  if (!strongPassword.test(password)) {
-    alert(
-      "Password must be at least 8 characters with uppercase, lowercase, and number",
-    );
-    return;
-  }
+  var isPasswordLengthValid = password.length >= 8;
+  var isPasswordMatch = password === confirmPassword;
 
-  // 🔥 ADD THIS
-  let confirmPassword = document
-    .getElementById("confirm_password")
-    .value.trim();
+  // =========================
+  // CHECKS
+  // =========================
 
-  //confirm pass
-  if (password !== confirmPassword) {
-    alert("Passwords do not match");
-    return;
-  }
-
-  // SEND DATA
-  let formData = new URLSearchParams();
-  formData.append("first_name", firstName);
-  formData.append("middle_name", middleName);
-  formData.append("last_name", lastName);
-  formData.append("birthday", birthday);
-  formData.append("email", email);
-  formData.append("password", password);
-
-  fetch("../controllers/UserController.php", {
-    method: "POST",
-    body: formData,
-  })
-    .then((res) => res.text())
-    .then((data) => {
-      if (data === "registered") {
-        alert("Registered successfully!");
-        window.location.href = "LoginPage.php";
-      } else {
-        alert(data);
-      }
+  if (!isFirstNameValid) {
+    Swal.fire({
+      icon: "warning",
+      title: "First Name Required",
+      text: "Please enter your first name",
+      confirmButtonColor: "#556b2f",
     });
+    return;
+  }
+
+  if (!isLastNameValid) {
+    Swal.fire({
+      icon: "warning",
+      title: "Last Name Required",
+      text: "Please enter your last name",
+      confirmButtonColor: "#556b2f",
+    });
+    return;
+  }
+
+  if (!isBirthdayValid) {
+    Swal.fire({
+      icon: "warning",
+      title: "Birthday Required",
+      text: "Please select your birthday",
+      confirmButtonColor: "#556b2f",
+    });
+    return;
+  }
+
+  if (!isEmailValid) {
+    Swal.fire({
+      icon: "error",
+      title: "Invalid Email",
+      text: "Please enter a valid email address",
+      confirmButtonColor: "#556b2f",
+    });
+    return;
+  }
+
+  if (!isContactValid) {
+    Swal.fire({
+      icon: "error",
+      title: "Invalid Contact Number",
+      text: "Contact number must be 11 digits",
+      confirmButtonColor: "#556b2f",
+    });
+    return;
+  }
+
+  if (!isPasswordLengthValid) {
+    Swal.fire({
+      icon: "warning",
+      title: "Weak Password",
+      text: "Password must be at least 8 characters",
+      confirmButtonColor: "#556b2f",
+    });
+    return;
+  }
+
+  if (!isPasswordMatch) {
+    Swal.fire({
+      icon: "error",
+      title: "Password Mismatch",
+      text: "Passwords do not match",
+      confirmButtonColor: "#556b2f",
+    });
+    return;
+  }
+
+  // =========================
+  // AJAX
+  // =========================
+
+  $.ajax({
+    url: "../controllers/UserController.php",
+    method: "POST",
+    data: {
+      first_name: firstName,
+      middle_name: middleName,
+      last_name: lastName,
+      birthday: birthday,
+      email: email,
+      contact_number: contactNumber,
+      password: password,
+    },
+
+    success: function (response) {
+      console.log(response);
+
+      Swal.fire({
+        icon: "success",
+        title: "Registration Successful!",
+        text: response,
+        confirmButtonColor: "#556b2f",
+      }).then(() => {
+        window.location.href = "LoginPage.php";
+      });
+    },
+
+    error: function (xhr, status, error) {
+      console.log(error);
+
+      Swal.fire({
+        icon: "error",
+        title: "AJAX Error",
+        text: "Something went wrong while processing your request",
+        confirmButtonColor: "#556b2f",
+      });
+    },
+  });
 }
+
 function loginUser() {
-  let formData = new URLSearchParams();
+  var email = document.getElementById("login_email").value.trim();
+  var password = document.getElementById("login_password").value;
 
-  formData.append("login_email", document.getElementById("login_email").value);
-  formData.append(
-    "login_password",
-    document.getElementById("login_password").value,
-  );
+  // =========================
+  // VALIDATION
+  // =========================
 
+  if (!email || !password) {
+    Swal.fire({
+      icon: "warning",
+      title: "Missing Fields",
+      text: "Please enter email and password.",
+      background: "#0f1c14",
+      color: "#fff",
+      confirmButtonColor: "#22c55e",
+    });
+    return;
+  }
+
+  // EMAIL FORMAT CHECK
+  var emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailPattern.test(email)) {
+    Swal.fire({
+      icon: "error",
+      title: "Invalid Email",
+      text: "Please enter a valid email address.",
+      background: "#0f1c14",
+      color: "#fff",
+      confirmButtonColor: "#ef4444",
+    });
+    return;
+  }
+
+  // PASSWORD LENGTH CHECK (optional but good)
+  if (password.length < 6) {
+    Swal.fire({
+      icon: "warning",
+      title: "Invalid Password",
+      text: "Password must be at least 6 characters.",
+      background: "#0f1c14",
+      color: "#fff",
+      confirmButtonColor: "#f59e0b",
+    });
+    return;
+  }
+
+  // =========================
+  // FETCH LOGIN
+  // =========================
   fetch("../controllers/UserController.php", {
     method: "POST",
-    body: formData,
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    body: `login_email=${email}&login_password=${password}`,
   })
     .then((res) => res.text())
     .then((data) => {
-      console.log(data);
+      console.log("LOGIN RESPONSE:", data);
 
-      if (data === "user") {
-        window.location.href = "Dashboard.php";
+      if (data.trim() === "user") {
+        Swal.fire({
+          icon: "success",
+          title: "Welcome Back!",
+          text: "Login successful.",
+          background: "#0f1c14",
+          color: "#fff",
+          confirmButtonColor: "#22c55e",
+          showConfirmButton: false,
+          timer: 1500,
+        });
+
+        setTimeout(() => {
+          window.location.href = "Dashboard.php";
+        }, 1500);
       } else {
-        alert("Login failed: " + data);
+        Swal.fire({
+          icon: "error",
+          title: "Login Failed",
+          text: "Invalid email or password.",
+          background: "#0f1c14",
+          color: "#fff",
+          confirmButtonColor: "#ef4444",
+        });
       }
+    })
+    .catch(() => {
+      Swal.fire({
+        icon: "error",
+        title: "Server Error",
+        text: "Something went wrong. Try again.",
+        background: "#0f1c14",
+        color: "#fff",
+        confirmButtonColor: "#ef4444",
+      });
     });
 }
 
 function logRun() {
   var userID = document.getElementById("user_id").value;
   var distance = document.getElementById("distance_km").value;
-  var time = document.getElementById("time_minutes").value;
+  var timeInput = document.getElementById("time_minutes").value; // HH:MM
   var date = document.getElementById("run_date").value;
 
-  if (distance === "" || time === "") {
-    M.toast({ html: "Please complete all fields" });
+  // VALIDATION
+  if (!distance || !timeInput || !date) {
+    Swal.fire({
+      icon: "warning",
+      title: "Missing Fields",
+      text: "Please complete all fields.",
+      background: "#0f1c14",
+      color: "#fff",
+      confirmButtonColor: "#22c55e",
+    });
     return;
   }
 
+  if (distance <= 0) {
+    Swal.fire({
+      icon: "error",
+      title: "Invalid Input",
+      text: "Distance must be greater than 0.",
+      background: "#0f1c14",
+      color: "#fff",
+      confirmButtonColor: "#22c55e",
+    });
+    return;
+  }
+
+  // 🔥 CONVERT HH:MM → TOTAL MINUTES
+  var cleanTime = timeInput.replace(/ AM| PM/i, ""); // remove AM/PM if any
+  var parts = cleanTime.split(":");
+
+  if (parts.length !== 2) {
+    Swal.fire({
+      icon: "error",
+      title: "Invalid Time Format",
+      text: "Please select a valid time.",
+      background: "#0f1c14",
+      color: "#fff",
+      confirmButtonColor: "#22c55e",
+    });
+    return;
+  }
+
+  var hours = parseInt(parts[0]) || 0;
+  var minutes = parseInt(parts[1]) || 0;
+
+  var totalMinutes = hours * 60 + minutes;
+
+  if (totalMinutes <= 0) {
+    Swal.fire({
+      icon: "error",
+      title: "Invalid Time",
+      text: "Time must be greater than 0.",
+      background: "#0f1c14",
+      color: "#fff",
+      confirmButtonColor: "#22c55e",
+    });
+    return;
+  }
+
+  // AJAX
   $.post(
     "../controllers/RunController.php",
     {
       user_id: userID,
       distance_km: distance,
-      time_minutes: time,
+      time_minutes: totalMinutes, // ✅ converted value
       run_date: date,
     },
-    function () {
-      M.toast({ html: "Run saved!" });
-      window.location.href = "Dashboard.php";
+    function (response) {
+      console.log("RUN RESPONSE:", response);
+
+      if (response.trim() === "success") {
+        Swal.fire({
+          icon: "success",
+          title: "Run Saved!",
+          html: `
+            <b>${distance} km</b><br>
+            Time: ${timeInput}
+          `,
+          background: "#0f1c14",
+          color: "#fff",
+          confirmButtonColor: "#22c55e",
+          showConfirmButton: false,
+          timer: 1500,
+        });
+
+        setTimeout(() => {
+          location.reload();
+        }, 1500);
+      } else {
+        Swal.fire({
+          icon: "error",
+          title: "Oops...",
+          text: "Failed to save run. Try again.",
+          background: "#0f1c14",
+          color: "#fff",
+          confirmButtonColor: "#ef4444",
+        });
+      }
     },
   );
 }
 
-// ================= WORKOUT =================
 function logWorkout() {
-  let userID = document.getElementById("user_id").value;
-  let type = document.getElementById("workout_type_id").value;
-  let duration = document.getElementById("duration_minutes").value;
+  var user_id = document.getElementById("user_id").value;
+  var type = document.getElementById("workout_type").value;
+  var timeInput = document.getElementById("workout_time").value; // make sure this exists
+  var date = document.getElementById("workout_date").value;
 
-  if (type === "" || duration === "") {
-    alert("Complete all fields");
+  console.log("TIME ELEMENT:", document.getElementById("workout_time"));
+
+  if (!type || !timeInput || !date) {
+    Swal.fire({
+      icon: "warning",
+      title: "Missing Fields",
+      text: "Please complete all fields.",
+      background: "#0f1c14",
+      color: "#fff",
+      confirmButtonColor: "#22c55e",
+    });
+    return;
+  }
+
+  if (!timeInput.includes(":")) {
+    Swal.fire({
+      icon: "error",
+      title: "Invalid Time",
+      text: "Please select a valid duration.",
+      background: "#0f1c14",
+      color: "#fff",
+      confirmButtonColor: "#ef4444",
+    });
+    return;
+  }
+
+  var cleanTime = timeInput.replace(/ AM| PM/i, "");
+  var parts = cleanTime.split(":");
+
+  var hours = parseInt(parts[0]) || 0;
+  var minutes = parseInt(parts[1]) || 0;
+
+  var totalMinutes = hours * 60 + minutes;
+
+  if (totalMinutes <= 0) {
+    Swal.fire({
+      icon: "error",
+      title: "Invalid Duration",
+      text: "Duration must be greater than 0.",
+      background: "#0f1c14",
+      color: "#fff",
+      confirmButtonColor: "#ef4444",
+    });
+    return;
+  }
+
+  var today = new Date();
+  var selectedDate = new Date(date);
+
+  today.setHours(0, 0, 0, 0);
+  selectedDate.setHours(0, 0, 0, 0);
+
+  if (selectedDate > today) {
+    Swal.fire({
+      icon: "error",
+      title: "Invalid Date",
+      text: "Future workouts are not allowed.",
+      background: "#0f1c14",
+      color: "#fff",
+      confirmButtonColor: "#ef4444",
+    });
     return;
   }
 
@@ -146,93 +438,449 @@ function logWorkout() {
     headers: {
       "Content-Type": "application/x-www-form-urlencoded",
     },
-    body: `user_id=${userID}&workout_type_id=${type}&duration_minutes=${duration}`,
+    body: `user_id=${user_id}&workout_type_id=${type}&duration_minutes=${totalMinutes}&workout_date=${date}`,
   })
     .then((res) => res.text())
-    .then((data) => {
-      console.log(data);
+    .then((response) => {
+      if (response.trim() === "success") {
+        Swal.fire({
+          icon: "success",
+          title: "Workout Saved!",
+          html: `<b>${timeInput}</b><br>${document.getElementById("workout_type").selectedOptions[0].text}`,
+          background: "#0f1c14",
+          color: "#fff",
+          confirmButtonColor: "#22c55e",
+          showConfirmButton: false,
+          timer: 1500,
+        });
 
-      if (data === "success") {
-        alert("Workout saved!");
-        window.location.href = "Dashboard.php";
+        setTimeout(() => location.reload(), 1500);
       } else {
-        alert("Error saving workout");
+        Swal.fire({
+          icon: "error",
+          title: "Oops...",
+          text: "Failed to save workout.",
+          background: "#0f1c14",
+          color: "#fff",
+          confirmButtonColor: "#ef4444",
+        });
       }
+    })
+    .catch(() => {
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "Something went wrong.",
+        background: "#0f1c14",
+        color: "#fff",
+        confirmButtonColor: "#ef4444",
+      });
     });
 }
 
-// ================= BODY METRICS =================
 function logWeight() {
   let userID = document.getElementById("user_id").value;
-  let weight = document.getElementById("weight_kg").value;
+  let weightInput = document.getElementById("weight_kg").value;
+  let date = document.getElementById("record_date").value;
 
-  if (weight === "") {
-    alert("Enter weight");
+  let weight = parseFloat(weightInput);
+
+  // =========================
+  // VALIDATION
+  // =========================
+
+  // REQUIRED
+  if (!weightInput || !date) {
+    Swal.fire({
+      icon: "warning",
+      title: "Missing Fields",
+      text: "Please enter weight and date.",
+      background: "#0f1c14",
+      color: "#fff",
+      confirmButtonColor: "#22c55e",
+    });
     return;
   }
 
+  // NUMBER CHECK
+  if (isNaN(weight)) {
+    Swal.fire({
+      icon: "error",
+      title: "Invalid Input",
+      text: "Weight must be a number.",
+      background: "#0f1c14",
+      color: "#fff",
+      confirmButtonColor: "#ef4444",
+    });
+    return;
+  }
+
+  // POSITIVE CHECK
+  if (weight <= 0) {
+    Swal.fire({
+      icon: "error",
+      title: "Invalid Weight",
+      text: "Weight must be greater than 0.",
+      background: "#0f1c14",
+      color: "#fff",
+      confirmButtonColor: "#ef4444",
+    });
+    return;
+  }
+
+  // REALISTIC RANGE
+  if (weight < 20 || weight > 300) {
+    Swal.fire({
+      icon: "warning",
+      title: "Unusual Value",
+      text: "Please enter a realistic weight (20–300 kg).",
+      background: "#0f1c14",
+      color: "#fff",
+      confirmButtonColor: "#f59e0b",
+    });
+    return;
+  }
+
+  // DATE VALIDATION
+  let today = new Date();
+  let selectedDate = new Date(date);
+
+  today.setHours(0, 0, 0, 0);
+  selectedDate.setHours(0, 0, 0, 0);
+
+  if (selectedDate > today) {
+    Swal.fire({
+      icon: "error",
+      title: "Invalid Date",
+      text: "Future entries are not allowed.",
+      background: "#0f1c14",
+      color: "#fff",
+      confirmButtonColor: "#ef4444",
+    });
+    return;
+  }
+
+  // =========================
+  // FETCH
+  // =========================
   fetch("../controllers/BodyMetricController.php", {
     method: "POST",
     headers: {
       "Content-Type": "application/x-www-form-urlencoded",
     },
-    body: `user_id=${userID}&weight_kg=${weight}`,
+    body: `user_id=${userID}&weight_kg=${weight}&record_date=${date}`,
   })
     .then((res) => res.text())
     .then((data) => {
-      console.log(data);
+      console.log("SERVER:", data);
 
-      if (data === "success") {
-        alert("Weight saved!");
-        window.location.href = "Dashboard.php";
+      if (data.trim() === "success") {
+        Swal.fire({
+          icon: "success",
+          title: "Weight Logged!",
+          html: `
+            <b>${weight} kg</b><br>
+            ${new Date(date).toLocaleDateString()}
+          `,
+          background: "#0f1c14",
+          color: "#fff",
+          confirmButtonColor: "#22c55e",
+          showConfirmButton: false,
+          timer: 1500,
+        });
+
+        setTimeout(() => {
+          location.reload();
+        }, 1500);
       } else {
-        alert("Error saving weight");
+        Swal.fire({
+          icon: "error",
+          title: "Oops...",
+          text: "Failed to save weight.",
+          background: "#0f1c14",
+          color: "#fff",
+          confirmButtonColor: "#ef4444",
+        });
       }
+    })
+    .catch(() => {
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "Something went wrong.",
+        background: "#0f1c14",
+        color: "#fff",
+        confirmButtonColor: "#ef4444",
+      });
     });
 }
 
-// ================= GOALS =================
-function createGoal() {
-  let userID = document.getElementById("user_id").value;
-  let type = document.getElementById("goal_type_id").value;
-  let target = document.getElementById("target_value").value;
-  let date = document.getElementById("target_date").value;
+function saveBodyMetric() {
+  var userID = document.getElementById("user_id").value;
+  var weight = parseFloat(document.getElementById("weight").value);
+  var date = document.getElementById("record_date").value;
 
-  if (type === "" || target === "" || date === "") {
-    alert("Complete all fields");
+  // REQUIRED
+  if (!weight || !date) {
+    Swal.fire({
+      icon: "warning",
+      title: "Missing Fields",
+      text: "Please complete all fields.",
+      background: "#0f1c14",
+      color: "#fff",
+      confirmButtonColor: "#22c55e",
+    });
     return;
   }
 
+  // NUMBER CHECK
+  if (isNaN(weight)) {
+    Swal.fire({
+      icon: "error",
+      title: "Invalid Input",
+      text: "Weight must be a number.",
+      background: "#0f1c14",
+      color: "#fff",
+      confirmButtonColor: "#ef4444",
+    });
+    return;
+  }
+
+  // POSITIVE
+  if (weight <= 0) {
+    Swal.fire({
+      icon: "error",
+      title: "Invalid Weight",
+      text: "Weight must be greater than 0.",
+      background: "#0f1c14",
+      color: "#fff",
+      confirmButtonColor: "#ef4444",
+    });
+    return;
+  }
+
+  // REALISTIC RANGE
+  if (weight < 20 || weight > 300) {
+    Swal.fire({
+      icon: "warning",
+      title: "Unusual Weight",
+      text: "Please enter a realistic weight (20–300 kg).",
+      background: "#0f1c14",
+      color: "#fff",
+      confirmButtonColor: "#f59e0b",
+    });
+    return;
+  }
+
+  // DATE VALIDATION
+  var today = new Date();
+  var selectedDate = new Date(date);
+
+  today.setHours(0, 0, 0, 0);
+  selectedDate.setHours(0, 0, 0, 0);
+
+  if (selectedDate > today) {
+    Swal.fire({
+      icon: "error",
+      title: "Invalid Date",
+      text: "Future dates are not allowed.",
+      background: "#0f1c14",
+      color: "#fff",
+      confirmButtonColor: "#ef4444",
+    });
+    return;
+  }
+
+  // AJAX
+  $.post(
+    "../controllers/BodyMetricController.php",
+    {
+      user_id: userID,
+      weight: weight,
+      record_date: date,
+    },
+    function (response) {
+      if (response.trim() === "success") {
+        Swal.fire({
+          icon: "success",
+          title: "Saved!",
+          text: `Weight: ${weight} kg`,
+          background: "#0f1c14",
+          color: "#fff",
+          confirmButtonColor: "#22c55e",
+          showConfirmButton: false,
+          timer: 1500,
+        });
+
+        setTimeout(() => location.reload(), 1500);
+      } else {
+        Swal.fire({
+          icon: "error",
+          title: "Oops...",
+          text: "Failed to save data.",
+          background: "#0f1c14",
+          color: "#fff",
+          confirmButtonColor: "#ef4444",
+        });
+      }
+    },
+  );
+}
+
+function createGoal() {
+  var userID = document.getElementById("user_id").value;
+  var type = document.getElementById("goal_type_id").value;
+  var value = document.getElementById("target_value").value;
+  var date = document.getElementById("target_date").value;
+
+  // =========================
+  // REQUIRED
+  // =========================
+  if (!type || !value || !date) {
+    Swal.fire({
+      icon: "warning",
+      title: "Missing Fields",
+      text: "Please complete all fields.",
+      background: "#0f1c14",
+      color: "#fff",
+      confirmButtonColor: "#22c55e",
+    });
+    return;
+  }
+
+  // =========================
+  // DATE VALIDATION
+  // =========================
+  var today = new Date().toISOString().split("T")[0];
+
+  if (date < today) {
+    Swal.fire({
+      icon: "error",
+      title: "Invalid Date",
+      text: "Goal date must be today or future.",
+      background: "#0f1c14",
+      color: "#fff",
+      confirmButtonColor: "#ef4444",
+    });
+    return;
+  }
+
+  // =========================
+  // TYPE-BASED VALIDATION
+  // =========================
+
+  // 🔹 Distance Goal
+  if (type == "distance") {
+    if (isNaN(value) || value <= 0) {
+      Swal.fire({
+        icon: "error",
+        title: "Invalid Distance",
+        text: "Enter a valid distance (km).",
+        background: "#0f1c14",
+        color: "#fff",
+        confirmButtonColor: "#ef4444",
+      });
+      return;
+    }
+  }
+
+  // 🔹 Weight Goal
+  if (type == "weight") {
+    if (isNaN(value) || value <= 0) {
+      Swal.fire({
+        icon: "error",
+        title: "Invalid Weight",
+        text: "Enter a valid weight (kg).",
+        background: "#0f1c14",
+        color: "#fff",
+        confirmButtonColor: "#ef4444",
+      });
+      return;
+    }
+  }
+
+  // 🔹 Target Pace (mm:ss)
+  if (type == "pace") {
+    if (!value.includes(":")) {
+      Swal.fire({
+        icon: "error",
+        title: "Invalid Pace",
+        text: "Format must be mm:ss (e.g. 5:30).",
+        background: "#0f1c14",
+        color: "#fff",
+        confirmButtonColor: "#ef4444",
+      });
+      return;
+    }
+
+    var parts = value.split(":");
+
+    if (parts.length !== 2) {
+      Swal.fire({
+        icon: "error",
+        title: "Invalid Pace",
+        text: "Format must be mm:ss.",
+        background: "#0f1c14",
+        color: "#fff",
+        confirmButtonColor: "#ef4444",
+      });
+      return;
+    }
+
+    var minutes = parseInt(parts[0]);
+    var seconds = parseInt(parts[1]);
+
+    if (isNaN(minutes) || isNaN(seconds) || seconds >= 60 || minutes <= 0) {
+      Swal.fire({
+        icon: "error",
+        title: "Invalid Pace",
+        text: "Enter a valid pace (e.g. 5:30).",
+        background: "#0f1c14",
+        color: "#fff",
+        confirmButtonColor: "#ef4444",
+      });
+      return;
+    }
+  }
+
+  // =========================
+  // FETCH
+  // =========================
   fetch("../controllers/GoalController.php", {
     method: "POST",
     headers: {
       "Content-Type": "application/x-www-form-urlencoded",
     },
-    body: `user_id=${userID}&goal_type_id=${type}&target_value=${target}&target_date=${date}`,
+    // body: `user_id=${userID}&goal_type=${type}&target_value=${value}&target_date=${date}`,
+    body: `user_id=${userID}&goal_type_id=${type}&target_value=${value}&target_date=${date}`,
   })
-    .then((res) => res.text())
+    .then((res) => res.json())
     .then((data) => {
-      console.log(data);
+      if (data.status === "success") {
+        Swal.fire({
+          icon: "success",
+          title: "Goal Saved!",
+          text: "Your goal has been successfully added 🎯",
+          background: "#0f1c14",
+          color: "#fff",
+          confirmButtonColor: "#22c55e",
+          showConfirmButton: false,
+          timer: 1500,
+        });
 
-      if (data === "success") {
-        alert("Goal saved!");
-        window.location.href = "Dashboard.php";
+        setTimeout(() => location.reload(), 1500);
       } else {
-        alert("Error saving goal");
+        Swal.fire({
+          icon: "error",
+          title: "Oops...",
+          text: data.message || "Failed to save goal.",
+          background: "#0f1c14",
+          color: "#fff",
+          confirmButtonColor: "#ef4444",
+        });
       }
     });
 }
-
-document.addEventListener("DOMContentLoaded", function () {
-  var elems = document.querySelectorAll(".datepicker");
-  M.Datepicker.init(elems, {
-    format: "yyyy-mm-dd",
-    yearRange: 100,
-    maxDate: new Date(), // ❗ disables future dates
-    defaultDate: new Date(2000, 0, 1),
-    setDefaultDate: true,
-  });
-});
 
 const ctx = document.getElementById("runChart");
 
@@ -329,3 +977,57 @@ document.addEventListener("DOMContentLoaded", function () {
     },
   });
 });
+
+document.addEventListener("DOMContentLoaded", function () {
+  var elems = document.querySelectorAll(".timepicker");
+
+  M.Timepicker.init(elems, {
+    twelveHour: false,
+    autoClose: true,
+  });
+});
+
+function logoutUser() {
+  fetch("../controllers/LogoutController.php", {
+    method: "POST",
+  })
+    .then(() => {
+      window.location.href = "LoginPage.php";
+    })
+    .catch((err) => console.error(err));
+}
+
+function updatePlaceholder() {
+  var goalTypeSelect = document.getElementById("goal_type_id");
+  var targetInput = document.getElementById("target_value");
+
+  var selectedText = goalTypeSelect.options[goalTypeSelect.selectedIndex].text;
+
+  if (selectedText === "Weight Goal") {
+    targetInput.type = "number";
+    targetInput.placeholder = "e.g. 65 (kg)";
+  } else if (selectedText === "Distance Goal") {
+    targetInput.type = "number";
+    targetInput.placeholder = "e.g. 5 (km)";
+  } else if (selectedText === "Target Pace") {
+    targetInput.type = "text"; // 🔥 IMPORTANT
+    targetInput.placeholder = "e.g. 5:30 (min/km)";
+  } else {
+    targetInput.type = "number";
+    targetInput.placeholder = "Enter target value";
+  }
+}
+
+const contactInput = document.getElementById("contact_number");
+
+if (contactInput) {
+  contactInput.addEventListener("input", function () {
+    // allow numbers only
+    this.value = this.value.replace(/[^0-9]/g, "");
+
+    // limit to 11 digits
+    if (this.value.length > 11) {
+      this.value = this.value.slice(0, 11);
+    }
+  });
+}

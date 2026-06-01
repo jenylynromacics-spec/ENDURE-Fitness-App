@@ -7,8 +7,9 @@
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
 
     <style>
         body {
@@ -213,37 +214,42 @@
 
                 <div class="col-6 mb-3">
                     <label>First Name</label>
-                    <input id="first_name" type="text" class="form-control maxlength=" 99" required>
+                    <input id="first_name" type="text" class="form-control" maxlength="100" required placeholder="e.g. Juan">
                 </div>
 
                 <div class="col-6 mb-3">
-                    <label>Middle Initial</label>
-                    <input id="middle_name" type="text" class="form-control maxlength=" 99">
+                    <label>Middle Name</label>
+                    <input id="middle_name" type="text" class="form-control" maxlength="100" placeholder="e.g. Santos (optional)">
                 </div>
 
-                <div class="col-6 mb-3">
+                <div class=" col-6 mb-3">
                     <label>Last Name</label>
-                    <input id="last_name" type="text" class="form-control maxlength=" 99" required>
+                    <input id="last_name" placeholder="e.g. Dela Cruz" type="text" class="form-control" maxlength="100" required>
                 </div>
 
                 <div class="col-6 mb-3">
                     <label>Birthday</label>
-                    <input type="date" id="birthday" max="<?= date('Y-m-d') ?>">
+                    <input type="date" id="birthday" placeholder="Select your birth date" class="form-control" max="<?= date('Y-m-d') ?>">
                 </div>
 
                 <div class="col-12 mb-3">
                     <label>Email Address</label>
-                    <input id="email" type="email" class="form-control maxlength=" 149" required>
+                    <input id="email" type="email" class="form-control" maxlength="150" required placeholder="e.g. juan@email.com">
+                </div>
+
+                <div class="col-12 mb-3">
+                    <label>Contact Number</label>
+                    <input id="contact_number" type="text" class="form-control" maxlength="11" required placeholder="e.g. 09123456789">
                 </div>
 
                 <div class="col-12 mb-3">
                     <label>Password</label>
-                    <input id="password" type="password" class="form-control maxlength=" 254" required>
+                    <input id="password" type="password" class="form-control" maxlength="20" required placeholder="e.g. Ju@n1234">
                 </div>
 
-                <div class="mb-3">
+                <div class="col-12 mb-3">
                     <label>Confirm Password</label>
-                    <input id="confirm_password" type="password" class="form-control" maxlength="254">
+                    <input id="confirm_password" type="password" class="form-control" maxlength="20" required placeholder="Re-enter your password">
                 </div>
 
             </div>
@@ -265,6 +271,7 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
     <script src="../Scripts/service.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 </body>
 

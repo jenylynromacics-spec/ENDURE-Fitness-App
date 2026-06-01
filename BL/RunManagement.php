@@ -26,4 +26,14 @@ class RunManagement
 
         return $this->model->insertRun($userID, $distance, $time, $pace, $date);
     }
+
+    public function getRunOverview($userID)
+    {
+        return $this->model->getRunOverview($userID);
+    }
+
+    public function getRecentRuns($userID)
+    {
+        return $this->model->getRecentRuns($userID);
+    }
 }

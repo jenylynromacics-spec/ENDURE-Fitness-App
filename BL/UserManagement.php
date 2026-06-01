@@ -15,19 +15,32 @@ class UserManagement
         $this->regsModel = new UserModel($db);
     }
 
-    public function registerUser($firstName, $middleName, $lastName, $birthday, $email, $password)
+    public function registerUser($firstName, $middleName, $lastName, $birthday, $contact, $email, $password)
     {
         $firstName = trim($firstName);
         $lastName = trim($lastName);
         $email = trim($email);
         $password = trim($password);
+        $contact = trim($contact);
 
-        if (empty($firstName) || empty($lastName) || empty($email) || empty($password)) {
+        // EMPTY CHECK
+        if (empty($firstName) || empty($lastName) || empty($email) || empty($password) || empty($contact)) {
             return "empty";
         }
 
+        // EMAIL VALIDATION
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
             return "invalid_email";
+        }
+
+        // CONTACT NUMBER VALIDATION (NUMBERS ONLY)
+        if (!preg_match("/^[0-9]{10,11}$/", $contact)) {
+            return "invalid_contact";
+        }
+
+        // PASSWORD MIN/MAX
+        if (strlen($password) < 6 || strlen($password) > 20) {
+            return "invalid_password";
         }
 
         if ($this->regsModel->checkEmail($email)) {
@@ -42,6 +55,7 @@ class UserManagement
             $middleName,
             $lastName,
             $birthday,
+            $contact,
             $email,
             $password_hash,
             $created_at

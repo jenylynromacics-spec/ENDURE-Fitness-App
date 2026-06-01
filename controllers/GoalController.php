@@ -1,17 +1,26 @@
 <?php
-session_start();
-require_once "../BL/GoalManagement.php";
+require_once "../bl/GoalManagement.php";
 
-$goal = new GoalManagement();
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
-if (isset($_POST["user_id"], $_POST["goal_type_id"], $_POST["target_value"], $_POST["target_date"])) {
+    $user_id = $_POST['user_id'];
+    $goal_type = $_POST['goal_type_id'];
+    $target_value = $_POST['target_value'];
+    $target_date = $_POST['target_date'];
+    $status = "Active";
 
-    $result = $goal->createGoal(
-        $_POST["user_id"],
-        $_POST["goal_type_id"],
-        $_POST["target_value"],
-        $_POST["target_date"]
-    );
+    $goalManager = new GoalManagement();
+    $result = $goalManager->createGoal($user_id, $goal_type, $target_value, $target_date, $status);
 
-    echo $result ? "success" : "error";
+    if ($result) {
+        echo json_encode([
+            "status" => "success",
+            "message" => "Goal saved successfully"
+        ]);
+    } else {
+        echo json_encode([
+            "status" => "error",
+            "message" => "Failed to save goal"
+        ]);
+    }
 }
